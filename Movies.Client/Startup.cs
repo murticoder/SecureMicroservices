@@ -14,6 +14,9 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.IdentityModel.Tokens;
 using IdentityModel;
+using Microsoft.Net.Http.Headers;
+using Movies.Client.HttpHandlers;
+using IdentityModel.Client;
 
 namespace Movies.Client
 {
@@ -33,7 +36,32 @@ namespace Movies.Client
             services.AddScoped<IMovieApiService, MovieApiService>();
 
 
+            // 1 create an HttpClient used for accessing the Movies.API
+            services.AddTransient<AuthenticationDelegatingHandler>();
 
+            services.AddHttpClient("MovieAPIClient", client =>
+            {
+                client.BaseAddress = new Uri("https://localhost:5001/"); // API GATEWAY URL
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
+            }).AddHttpMessageHandler<AuthenticationDelegatingHandler>();
+
+
+            // 2 create an HttpClient used for accessing the IDP
+            services.AddHttpClient("IDPClient", client =>
+            {
+                client.BaseAddress = new Uri("https://localhost:5005/");
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
+            });
+
+            services.AddSingleton(new ClientCredentialsTokenRequest
+            {
+                Address = "https://localhost:5005/connect/token",
+                ClientId = "movieClient",
+                ClientSecret = "secret",
+                Scope = "movieAPI"
+            });
 
             services.AddAuthentication(options =>
             {
@@ -72,6 +100,11 @@ namespace Movies.Client
                     //    RoleClaimType = JwtClaimTypes.Role
                     //};
                 });
+
+
+           
+
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
