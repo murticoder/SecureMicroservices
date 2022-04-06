@@ -31,7 +31,8 @@ namespace Movies.Client.ApiServices
 
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                "/api/movies");
+                //"/api/movies"); // api direct
+                "/movies");//gateway
 
             var response = await httpClient.SendAsync(
                 request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
